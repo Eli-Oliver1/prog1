@@ -1,17 +1,7 @@
-/*
- * Program 1 - Ray Casting
- *
- * This file intentionally implements the ray-casting math directly rather than
- * using a graphics/rasterization library. No external math libraries are used.
- *
- * The rendering order is pixel -> primitive, as required by the assignment.
- */
+
 
 "use strict";
 
-// -----------------------------------------------------------------------------
-// Hardcoded submission URLs required by the assignment
-// -----------------------------------------------------------------------------
 const SUBMISSION_ELLIPSOIDS_URL =
     "https://ncsucgclass.github.io/prog1/ellipsoids.json";
 const SUBMISSION_LIGHTS_URL =
@@ -23,9 +13,7 @@ const EPSILON = 0.00001;
 const RAY_EPSILON = 0.0001;
 const BACKGROUND = [0, 0, 0];
 
-// -----------------------------------------------------------------------------
-// Small vector math toolkit
-// -----------------------------------------------------------------------------
+
 function vec3(x, y, z) {
     return [x, y, z];
 }
@@ -84,9 +72,6 @@ function reflect(v, n) {
     return sub(v, scale(n, 2 * dot(v, n)));
 }
 
-// -----------------------------------------------------------------------------
-// Simple data normalization helpers
-// -----------------------------------------------------------------------------
 function materialFromObject(obj) {
     return {
         ambient: obj.ambient || [0, 0, 0],
@@ -133,9 +118,6 @@ function normalizeTriangles(raw) {
     return triangles;
 }
 
-// -----------------------------------------------------------------------------
-// Required input readers
-// -----------------------------------------------------------------------------
 async function loadJson(url) {
     const response = await fetch(url, { cache: "no-store" });
 
@@ -165,9 +147,6 @@ async function loadSubmissionScene() {
     };
 }
 
-// -----------------------------------------------------------------------------
-// Camera construction
-// -----------------------------------------------------------------------------
 function makeCamera(settings) {
     const eye = settings.eye;
     const forward = normalize(settings.look);
@@ -232,9 +211,6 @@ function rayForPixel(camera, projection, width, height, px, py) {
     };
 }
 
-// -----------------------------------------------------------------------------
-// Ray intersections
-// -----------------------------------------------------------------------------
 function intersectEllipsoid(ray, ellipsoid) {
     const ro = sub(ray.origin, ellipsoid.center);
     const d = ray.direction;
@@ -399,9 +375,6 @@ function nearestHit(ray, ellipsoids, triangles, maxT = Infinity) {
     return closest;
 }
 
-// -----------------------------------------------------------------------------
-// Lighting and shadows
-// -----------------------------------------------------------------------------
 function isInShadow(point, normal, light, scene) {
     const toLight = sub(light.position, point);
     const lightDistance = length3(toLight);
@@ -516,14 +489,8 @@ function shadeHit(hit, camera, lights, shadowsEnabled, flatDiffuse) {
     return clampColor(color);
 }
 
-// -----------------------------------------------------------------------------
-// Current scene used by shadow tests
-// -----------------------------------------------------------------------------
 let CURRENT_SCENE = null;
 
-// -----------------------------------------------------------------------------
-// Rendering
-// -----------------------------------------------------------------------------
 function renderScene(context, scene, settings) {
     const width = settings.width;
     const height = settings.height;
@@ -589,9 +556,6 @@ function renderScene(context, scene, settings) {
     context.putImageData(image, 0, 0);
 }
 
-// -----------------------------------------------------------------------------
-// Custom scene
-// -----------------------------------------------------------------------------
 function material(ambient, diffuse, specular, n) {
     return {
         ambient,
@@ -801,9 +765,6 @@ function makeInterestingScene() {
     };
 }
 
-// -----------------------------------------------------------------------------
-// UI parsing / setup
-// -----------------------------------------------------------------------------
 function numberFrom(id, fallback) {
     const element = document.getElementById(id);
     const value = Number(element.value);
