@@ -1,11 +1,242 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Pixel Drawing</title>
-<script type="text/javascript" src="drawstuff.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Program 1 — Ray Casting</title>
+<style>
+    :root {
+        font-family: Arial, Helvetica, sans-serif;
+        color-scheme: dark;
+    }
+
+    body {
+        margin: 0;
+        background: #151515;
+        color: #eee;
+    }
+
+    .page {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    h1 {
+        margin: 0 0 8px;
+    }
+
+    .hint {
+        margin: 0 0 18px;
+        color: #c9c9c9;
+    }
+
+    .layout {
+        display: grid;
+        grid-template-columns: minmax(320px, 760px) minmax(300px, 1fr);
+        gap: 18px;
+        align-items: start;
+    }
+
+    .canvas-panel,
+    .controls {
+        background: #202020;
+        border: 1px solid #3a3a3a;
+        border-radius: 10px;
+        padding: 14px;
+    }
+
+    #viewport {
+        display: block;
+        width: 512px;
+        height: auto;
+        max-width: 100%;
+        background: #000;
+        image-rendering: auto;
+        border: 1px solid #555;
+    }
+
+    .group {
+        border: 1px solid #3a3a3a;
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 12px;
+    }
+
+    .group h2 {
+        font-size: 15px;
+        margin: 0 0 9px;
+    }
+
+    .row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 7px;
+        margin-bottom: 8px;
+    }
+
+    .row.four {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    label {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        font-size: 12px;
+        color: #c7c7c7;
+    }
+
+    input[type="number"] {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 7px;
+        border: 1px solid #515151;
+        border-radius: 5px;
+        background: #111;
+        color: #fff;
+    }
+
+    .checks {
+        display: grid;
+        gap: 7px;
+    }
+
+    .checks label {
+        flex-direction: row;
+        align-items: center;
+        color: #eee;
+    }
+
+    .buttons {
+        display: grid;
+        gap: 8px;
+        margin-top: 8px;
+    }
+
+    button {
+        border: 1px solid #666;
+        border-radius: 6px;
+        padding: 9px 11px;
+        background: #2f2f2f;
+        color: white;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background: #3a3a3a;
+    }
+
+    #status {
+        margin-top: 10px;
+        min-height: 18px;
+        font-size: 13px;
+    }
+
+    #status.ok {
+        color: #a9e8b1;
+    }
+
+    #status.error {
+        color: #ff9f9f;
+    }
+
+    .part6 {
+        border-left: 3px solid #8ad2ff;
+        padding-left: 9px;
+        color: #d9efff;
+        font-size: 13px;
+        line-height: 1.45;
+    }
+
+    @media (max-width: 900px) {
+        .layout {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
 </head>
-<body onload="main();">
-<canvas id="viewport" width="512" height="512"></canvas>
+<body>
+<div class="page">
+    <h1>Program 1 — Ray Casting</h1>
+    <p class="hint">Default scene uses the required input files. Press <strong>Space</strong> to show the custom scene.</p>
+
+    <div class="layout">
+        <section class="canvas-panel">
+            <canvas id="viewport" width="512" height="512"></canvas>
+            <div id="status" class="ok">Starting...</div>
+        </section>
+
+        <section class="controls">
+            <div class="group">
+                <h2>Viewport</h2>
+                <div class="row">
+                    <label>Width<input id="canvasWidth" type="number" value="512" min="1"></label>
+                    <label>Height<input id="canvasHeight" type="number" value="512" min="1"></label>
+                    <label>Window distance<input id="windowDistance" type="number" value="0.5" step="0.01"></label>
+                </div>
+            </div>
+
+            <div class="group">
+                <h2>Eye</h2>
+                <div class="row">
+                    <label>X<input id="eyeX" type="number" value="0.5" step="0.01"></label>
+                    <label>Y<input id="eyeY" type="number" value="0.5" step="0.01"></label>
+                    <label>Z<input id="eyeZ" type="number" value="-0.5" step="0.01"></label>
+                </div>
+            </div>
+
+            <div class="group">
+                <h2>View-up vector</h2>
+                <div class="row">
+                    <label>X<input id="upX" type="number" value="0" step="0.01"></label>
+                    <label>Y<input id="upY" type="number" value="1" step="0.01"></label>
+                    <label>Z<input id="upZ" type="number" value="0" step="0.01"></label>
+                </div>
+            </div>
+
+            <div class="group">
+                <h2>Look-at vector</h2>
+                <div class="row">
+                    <label>X<input id="lookX" type="number" value="0" step="0.01"></label>
+                    <label>Y<input id="lookY" type="number" value="0" step="0.01"></label>
+                    <label>Z<input id="lookZ" type="number" value="1" step="0.01"></label>
+                </div>
+            </div>
+
+            <div class="group">
+                <h2>Window in view space</h2>
+                <div class="row four">
+                    <label>Left<input id="windowLeft" type="number" value="-0.5" step="0.01"></label>
+                    <label>Right<input id="windowRight" type="number" value="0.5" step="0.01"></label>
+                    <label>Top<input id="windowTop" type="number" value="0.5" step="0.01"></label>
+                    <label>Bottom<input id="windowBottom" type="number" value="-0.5" step="0.01"></label>
+                </div>
+            </div>
+
+            <div class="group">
+                <h2>Rendering</h2>
+                <div class="checks">
+                    <label><input id="flatDiffuseToggle" type="checkbox"> Flat diffuse shading</label>
+                    <label><input id="shadowToggle" type="checkbox" checked> Shadows</label>
+                    <label><input id="triangleToggle" type="checkbox" checked> Triangles</label>
+                </div>
+            </div>
+
+            <div class="buttons">
+                <button id="renderButton" type="button">Render Assignment Scene</button>
+                <button id="interestingButton" type="button">Show Custom Scene (Space)</button>
+                <button id="resetButton" type="button">Reset Defaults</button>
+            </div>
+
+            <p class="part6">
+                The custom scene uses ellipsoids and triangles, with multiple colored lights
+                and the same ray-casting renderer.
+            </p>
+        </section>
+    </div>
+</div>
+
+<script src="drawstuff.js"></script>
 </body>
 </html>
